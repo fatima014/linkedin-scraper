@@ -56,26 +56,24 @@ with open('results.json', 'w', encoding='utf-8') as f:
 
         sleep(10)
         sel = Selector(text=driver.page_source)
-        elements = sel.xpath("//div[contains(@class, 'ember-view') and contains(@class, 'occludable-update')]//div[contains(@class, 'update-components-text') and contains(@class, 'feed-shared-update-v2__commentary')]//span[@class='break-words']//span[@dir='ltr']")
-
-        date = sel.xpath("//div[contains(@class, 'ember-view') and contains(@class, 'occludable-update')]//span[contains(@class, 'update-components-actor__sub-description')]/div[contains(@class, 'update-components-text-view') and contains(@class, 'white-space-pre-wrap') and contains(@class, 'break-words')]/span[@class='visually-hidden']/span")
-        if profile == 'https://www.linkedin.com/in/andrewyng/recent-activity/':
-            print(f'number of dates: {len(date)}')
-            print(f'number of elements: {len(elements)}')
-        for i, element in enumerate(elements):
-            text = element.extract()
-            cleaned_text = re.sub('<[^<]+?>', '', text)
-            date[i] = re.sub('<[^<]+?>', '', date[i].extract())
+        div_element = sel.xpath("//div[contains(@class, 'ember-view') and contains(@class, 'occludable-update')]")
+        
+        for element in div_element:
             
-            date[i] = date[i].split(' ')[0]
-            if date[i] not in posts:
-                posts.setdefault(date[i], [])
-            posts[date[i]].append(cleaned_text)
+            post = element.xpath(".//div[contains(@class, 'update-components-text') and contains(@class, 'feed-shared-update-v2__commentary')]//span[@class='break-words']//span[@dir='ltr']").extract_first()
+            if post:
+                cleaned_text = re.sub('<[^<]+?>', '', post)
+                date = element.xpath(".//span[contains(@class, 'update-components-actor__sub-description')]/div[contains(@class, 'update-components-text-view') and contains(@class, 'white-space-pre-wrap') and contains(@class, 'break-words')]/span[@class='visually-hidden']/span").extract_first()
+                date = re.sub('<[^<]+?>', '', date).split(' ')[0]
+                if date not in posts:
+                    posts.setdefault(date, [])
+                posts[date].append(cleaned_text)
+            
     json.dump(posts, f, ensure_ascii=False)
         
-# for date in posts:
-#     print(f'date: {date}')
-#     count += len(posts[date])
-#     print(count)
-# print(count)
+for date in posts:
+    print(f'date: {date}')
+    count += len(posts[date])
+    print(count)
+print(count)
 
