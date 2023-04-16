@@ -25,7 +25,7 @@ username.send_keys(my_username) # username field
 
 password = driver.find_element(By.NAME, 'session_password')
 password.send_keys(my_password) # password field
-sleep(7)
+sleep(5)
 
 log_in_button = driver.find_element(By.CLASS_NAME,'sign-in-form__submit-btn--full-width') # submit button
 
@@ -39,7 +39,6 @@ profile_urls = ['https://www.linkedin.com/in/andrewyng/recent-activity/','https:
 sel = Selector(text=driver.page_source)
 
 posts= {}
-count = 0
 
 with open('results.json', 'w', encoding='utf-8') as f:
     for profile in profile_urls:
@@ -47,33 +46,31 @@ with open('results.json', 'w', encoding='utf-8') as f:
 
         print(f'Getting {profile}')
         
-        try:
-            # Wait for the button to be clickable
-            button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'artdeco-button--full') and contains(@class, 'artdeco-button--secondary') and contains(@class, 'scaffold-finite-scroll__load-button')]")))
-            button.click()
-        except TimeoutException:
-            print("Timed out waiting for button to be clickable")
+        for i in range(2):
+            try:
+                # Wait for the button to be clickable
+                button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[contains(@class, 'artdeco-button--full') and contains(@class, 'artdeco-button--secondary') and contains(@class, 'scaffold-finite-scroll__load-button')]")))
+                button.click()
+            except TimeoutException:
+                print("Timed out waiting for button to be clickable")
+            sleep(10)
 
-        sleep(10)
         sel = Selector(text=driver.page_source)
         div_element = sel.xpath("//div[contains(@class, 'ember-view') and contains(@class, 'occludable-update')]")
         
         for element in div_element:
-            
             post = element.xpath(".//div[contains(@class, 'update-components-text') and contains(@class, 'feed-shared-update-v2__commentary')]//span[@class='break-words']//span[@dir='ltr']").extract_first()
-            if post:
-                cleaned_text = re.sub('<[^<]+?>', '', post)
-                date = element.xpath(".//span[contains(@class, 'update-components-actor__sub-description')]/div[contains(@class, 'update-components-text-view') and contains(@class, 'white-space-pre-wrap') and contains(@class, 'break-words')]/span[@class='visually-hidden']/span").extract_first()
-                date = re.sub('<[^<]+?>', '', date).split(' ')[0]
-                if date not in posts:
-                    posts.setdefault(date, [])
-                posts[date].append(cleaned_text)
-            
+            if not post:
+                continue
+
+            cleaned_text = re.sub('<[^<]+?>', '', post)
+            date = element.xpath(".//span[contains(@class, 'update-components-actor__sub-description')]/div[contains(@class, 'update-components-text-view') and contains(@class, 'white-space-pre-wrap') and contains(@class, 'break-words')]/span[@class='visually-hidden']/span").extract_first()
+            date = re.sub('<[^<]+?>', '', date).split(' ')[0]
+            posts.setdefault(date, set())
+            posts[date].add(cleaned_text)
+    posts = {key: list(value) for key, value in posts.items()}
     json.dump(posts, f, ensure_ascii=False)
-        
-for date in posts:
-    print(f'date: {date}')
-    count += len(posts[date])
-    print(count)
-print(count)
+
+driver.quit()
+
 
