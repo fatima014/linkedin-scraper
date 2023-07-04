@@ -30,9 +30,11 @@ def is_within_duration(timeframe, duration):
         return False # handle unsupported units
     return duration_in_seconds <= duration
 
-duration = 2 * 7 * 24 * 60 * 60 # weeks in seconds
-recent_data = [posts[item] for item in posts if is_within_duration(item, duration)]
+duration = 1 * 7 * 24 * 60 * 60 # weeks in seconds
+recent_data = [item for item in posts if is_within_duration(item, duration)]
 
-with open("filtered_posts.txt", 'w', encoding='utf-8') as f:
-    for posts in recent_data:
-        f.write("\n".join(posts))
+filtered_posts = {}
+with open("filtered_posts.json", 'w', encoding='utf-8') as f:
+    for item in recent_data:
+        filtered_posts[item] = posts[item]
+    json.dump(filtered_posts, f, ensure_ascii=False)

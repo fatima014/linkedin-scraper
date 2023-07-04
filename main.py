@@ -1,5 +1,6 @@
 import json
 import re
+import os
 from time import sleep
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -18,22 +19,27 @@ driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 driver.get('https://www.linkedin.com/')
 sleep(2)
 
-my_username='emaildummy773@gmail.com'
-my_password='e_dummy123'
-username = driver.find_element(By.NAME, 'session_key')
-username.send_keys(my_username) # username field
+my_username = os.getenv('LINKEDIN_USERNAME', 'emaildummy773@gmail.com')
+my_password = os.getenv('LINKEDIN_PASSWORD', 'e_dummy123')
 
-password = driver.find_element(By.NAME, 'session_password')
-password.send_keys(my_password) # password field
-sleep(5)
+try:
+    username = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, 'session_key')))
+    username.send_keys(my_username)
 
-log_in_button = driver.find_element(By.CLASS_NAME,'sign-in-form__submit-btn--full-width') # submit button
+    password = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, 'session_password')))
+    password.send_keys(my_password)
 
-log_in_button.click() # click the submit button
+    log_in_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'sign-in-form__submit-btn--full-width')))
+    log_in_button.click()
+except TimeoutException:
+    print("Error: Timed out waiting for login page to load")
+    driver.quit()
+    exit()
+
 sleep(3)
 
 
-profile_urls = ['https://www.linkedin.com/in/andrewyng/recent-activity/','https://www.linkedin.com/in/paulsavery/recent-activity/', 'https://www.linkedin.com/in/yann-lecun/recent-activity/', 'https://www.linkedin.com/in/michael-gschwind-3704222/recent-activity/', 'https://www.linkedin.com/in/tonyrobin/recent-activity/']
+profile_urls = ['https://www.linkedin.com/in/andrewyng/recent-activity/shares']
 
 
 sel = Selector(text=driver.page_source)
@@ -65,9 +71,12 @@ with open('results.json', 'w', encoding='utf-8') as f:
 
             cleaned_text = re.sub('<[^<]+?>', '', post)
             date = element.xpath(".//span[contains(@class, 'update-components-actor__sub-description')]/div[contains(@class, 'update-components-text-view') and contains(@class, 'white-space-pre-wrap') and contains(@class, 'break-words')]/span[@class='visually-hidden']/span").extract_first()
+            if not date:
+                continue
             date = re.sub('<[^<]+?>', '', date).split(' ')[0]
             posts.setdefault(date, set())
             posts[date].add(cleaned_text)
+
     posts = {key: list(value) for key, value in posts.items()}
     json.dump(posts, f, ensure_ascii=False)
 
