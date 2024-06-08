@@ -82,4 +82,3 @@ with open('results.json', 'w', encoding='utf-8') as f:
 
 driver.quit()
 
-
