@@ -19,8 +19,8 @@ driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 driver.get('https://www.linkedin.com/')
 sleep(2)
 
-my_username = os.getenv('LINKEDIN_USERNAME', 'emaildummy773@gmail.com')
-my_password = os.getenv('LINKEDIN_PASSWORD', 'e_dummy123')
+my_username = os.getenv('LINKEDIN_USERNAME')
+my_password = os.getenv('LINKEDIN_PASSWORD')
 
 try:
     username = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.NAME, 'session_key')))
